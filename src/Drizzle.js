@@ -1,10 +1,10 @@
+// Check to see if we are running in react-native.
+if (!(typeof navigator != 'undefined' && navigator.product == 'ReactNative')) {
 // Load as promise so that async Drizzle initialization can still resolve
-var windowPromise = new Promise((resolve, reject) => {
-  window.addEventListener('load', resolve)
-  
-  // resolve in any case if we missed the load event and the document is already loaded
-  if (document.readyState === `complete`) resolve()
-})
+  var windowPromise = new Promise((resolve, reject) => {
+    window.addEventListener('load', resolve)
+  })
+}
 
 class Drizzle {
   constructor (options, store) {
@@ -17,11 +17,18 @@ class Drizzle {
 
     this.loadingContract = {}
 
-    // Wait for window load event in case of injected web3.
-    windowPromise.then(() => {
-      // Begin Drizzle initialization.
-      store.dispatch({ type: 'DRIZZLE_INITIALIZING', drizzle: this, options })
-    })
+    // Check to see if react-native
+    if (typeof navigator !== 'undefined' && navigator.product == 'ReactNative') {
+      // Running in react-native, nothing to wait for, just initizalize
+      store.dispatch({type: 'DRIZZLE_INITIALIZING', drizzle: this, options})
+    }
+    else {
+      // Not react-native, using default initialization
+      windowPromise.then(() => {
+        // Begin Drizzle initialization
+        store.dispatch({type: 'DRIZZLE_INITIALIZING', drizzle: this, options})
+      })
+    }
   }
 
   addContract (contractConfig, events = []) {
